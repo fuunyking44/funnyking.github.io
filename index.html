@@ -28,49 +28,23 @@
     <div id="result" class="result hidden"></div>
   </div>
 
+<script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.2.0-beta.19/libs/cn/index.js"></script>
 <script>
-// ====== 配置 ======
-const starPayUrl = 'https://t.zsxq.com/BZfnk'; // ① 替换为知识星球收银台链接（¥2.99 商品）
-const callbackUrl = location.origin + location.pathname; // 当前页（回调用）
-const cozeApiUrl = 'https://api.coze.cn/v1/bot/get_online_info';     // ③ Coze 开放 API
-const cozeBotId = '7580046485862498345';                                 // ④ 替换 BotID
-const cozeToken = 'carrot';                              // ⑤ 替换 Token
-
-// ====== 主流程 ======
-document.getElementById('payBtn').addEventListener('click', function () {
-  const product = document.getElementById('product').value.trim();
-  if (!product) return alert('请输入产品名');
-  // 跳知识星球收银台（带回调）
-  location.href = starPayUrl + '?callback=' + encodeURIComponent(callbackUrl + '?status=success&product=' + encodeURIComponent(product));
-});
-
-// 回调回来
-window.addEventListener('load', async () => {
-  const url = new URL(location.href);
-  const status = url.searchParams.get('status');
-  const product = url.searchParams.get('product');
-  if (status !== 'success' || !product) return; // 未支付或首次进入
-
-  document.getElementById('loading').classList.remove('hidden');
-  document.getElementById('result').classList.add('hidden');
-
-  try {
-    // 调 Coze API 生成图文
-    const res = await fetch(cozeApiUrl, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${cozeToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bot_id: cozeBotId, user: 'user_001', query: product, stream: false })
-    });
-    const data = await res.json();
-    if (!data.messages || !data.messages[0]) throw new Error('生成失败');
-    document.getElementById('result').textContent = data.messages[0].content;
-    document.getElementById('result').classList.remove('hidden');
-  } catch (e) {
-    alert(e.message || '生成失败，请重试');
-  } finally {
-    document.getElementById('loading').classList.add('hidden');
-  }
-});
+  new CozeWebSDK.WebChatClient({
+    config: {
+      bot_id: '7580046485862498345',
+    },
+    componentProps: {
+      title: 'Coze',
+    },
+    auth: {
+      type: 'token',
+      token: 'pat_********',
+      onRefreshToken: function () {
+        return 'pat_********'
+      }
+    }
+  });
 </script>
 </body>
 </html>
