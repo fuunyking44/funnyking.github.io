@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 小红书爆款机</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;background:#f5f5f5;margin:0;padding:24px}
+    .box{max-width:420px;margin:auto;background:#fff;border-radius:8px;padding:24px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+    h1{font-size:20px;margin-bottom:12px;text-align:center}
+    input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:14px;box-sizing:border-box}
+    textarea{resize:vertical;min-height:80px}
+    button{width:100%;padding:12px;font-size:16px;color:#fff;background:#07c160;border:0;border-radius:4px;cursor:pointer;margin-top:12px}
+    button:disabled{background:#ccc}
+    .result{margin-top:16px;font-size:14px;line-height:1.6;white-space:pre-wrap;word-break:break-all}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>AI 小红书爆款机</h1>
+    <label>产品名（如：鲨鱼夹）</label>
+    <input id="product" placeholder="请输入产品名" />
+    
+    <button id="payBtn">生成图文（¥2.99）</button>
+    
+    <div id="loading" class="hidden">正在生成，请稍候…</div>
+    <div id="result" class="result hidden"></div>
+  </div>
+
+<script>
+// ========== 配置 ==========
+const payUrl = 'https://xiaobaotong.com/shop/你的店铺ID/商品ID'; // ① 替换小报童收款链接
+const callbackUrl = 'https://你的域名.github.io/index.html';   // ② 替换回调域名（本页地址）
+const cozeApiUrl = 'https://api.coze.cn/open_api/v2/chat';     // ③ Coze 开放 API
+const cozeBotId = '你的BotID';                                 // ④ 替换 BotID
+const cozeToken = '你的BotToken';                              // ⑤ 替换 Token
+
+// ========== 主流程 ==========
+document.getElementById('payBtn').addEventListener('click', function () {
+  const product = document.getElementById('product').value.trim();
+  if (!product) return alert('请输入产品名');
+
+  // 跳小报童收款（带回调）
+  location.href = `${payUrl}?callback=${encodeURIComponent(callbackUrl + '?product=' + encodeURIComponent(product))}`;
+});
+
+// ========== 回调后自动调用 Coze API ==========
+window.addEventListener('load', async () => {
+  const url = new URL(location.href);
+  const product = url.searchParams.get('product');
+  const payStatus = url.searchParams.get('status'); // 小报童支付成功后会带 status=success
+
+  if (!product) return; // 无产品参数 → 正常首次进入
+
+  if (payStatus !== 'success') {
+    alert('请先完成支付');
+    location.href = location.pathname; // 回到干净页面
+    return;
+  }
+
+  // 显示加载
+  document.getElementById('loading').classList.remove('hidden');
+  document.getElementById('result').classList.add('hidden');
+
+  try {
+    // 调 Coze 开放 API
+    const res = await fetch(cozeApiUrl, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${cozeToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bot_id: cozeBotId,
+        user: 'user_001',
+        query: product,
+        stream: false
+      })
+    });
+    const data = await res.json();
+    if (!data.messages || !data.messages[0]) throw new Error('生成失败');
+
+    // 展示结果
+    document.getElementById('result').textContent = data.messages[0].content;
+    document.getElementById('result').classList.remove('hidden');
+
+  } catch (e) {
+    alert(e.message || '生成失败，请重试');
+  } finally {
+    document.getElementById('loading').classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>
