@@ -11,7 +11,7 @@ new CozeWebSDK.WebChatClient({
   */
   config: {
     type: 'bot',
-    bot_id: '',
+    bot_id: '7580046485862498345',
     isIframe: false,
   },
   /**
